@@ -11,6 +11,12 @@ public class RiwayatPerubahanDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         setLocationRelativeTo(parent);
+        tblRiwayat.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblRiwayatMouseClicked(evt);
+            }
+        });
         loadRiwayatData();
     }
 
@@ -207,10 +213,10 @@ public class RiwayatPerubahanDialog extends javax.swing.JDialog {
     private void tblRiwayatMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblRiwayatMouseClicked
         int selectedRow = tblRiwayat.getSelectedRow();
         if (selectedRow != -1) {
-            String before = tblRiwayat.getValueAt(selectedRow, 5).toString();
-            String after = tblRiwayat.getValueAt(selectedRow, 6).toString();
-            txtBefore.setText(before);
-            txtAfter.setText(after);
+            Object before = tblRiwayat.getValueAt(selectedRow, 5);
+            Object after = tblRiwayat.getValueAt(selectedRow, 6);
+            txtBefore.setText(before == null ? "" : before.toString());
+            txtAfter.setText(after == null ? "" : after.toString());
         }
     }//GEN-LAST:event_tblRiwayatMouseClicked
 

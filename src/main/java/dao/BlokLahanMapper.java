@@ -12,12 +12,6 @@ final class BlokLahanMapper {
         String nama = rs.getString("nama_blok_lahan");
         double luas = rs.getDouble("luas_blok_lahan");
         String kom = rs.getString("komoditas");
-        int tahun = 2020;
-        try {
-            tahun = rs.getInt("tahun_tanam");
-            if (tahun == 0) tahun = 2020;
-        } catch (SQLException ignored) {}
-        return new BlokLahan(kode, nama, luas, kom, tahun);
+        return new BlokLahan(kode, nama, luas, kom);
     }
 }
-

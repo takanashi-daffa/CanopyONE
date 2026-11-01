@@ -5,14 +5,12 @@ public class BlokLahan {
     private String namaLahan;
     private double luasLahan;
     private String komoditas;
-    private int tahunTanam;
 
-    public BlokLahan(String kodeBlok, String namaLahan, double luasLahan, String komoditas, int tahunTanam) {
+    public BlokLahan(String kodeBlok, String namaLahan, double luasLahan, String komoditas) {
         this.kodeBlok = kodeBlok;
         this.namaLahan = namaLahan;
         this.luasLahan = luasLahan;
         this.komoditas = komoditas;
-        this.tahunTanam = tahunTanam;
     }
 
     public String getKodeBlok() { return kodeBlok; }
@@ -26,9 +24,6 @@ public class BlokLahan {
 
     public String getKomoditas() { return komoditas; }
     public void setKomoditas(String komoditas) { this.komoditas = komoditas; }
-
-    public int getTahunTanam() { return tahunTanam; }
-    public void setTahunTanam(int tahunTanam) { this.tahunTanam = tahunTanam; }
 
     @Override
     public String toString() {

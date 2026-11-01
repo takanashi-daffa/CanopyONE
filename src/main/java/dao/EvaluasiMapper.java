@@ -12,17 +12,18 @@ final class EvaluasiMapper {
         String tgl = rs.getString("tanggal_evaluasi");
         String status = rs.getString("status");
         String catatan = rs.getString("catatan_tindak_lanjut");
+        if (catatan == null || catatan.trim().isEmpty()) {
+            catatan = rs.getString("catatan_evaluasi");
+        }
         if (catatan == null) catatan = "-";
 
-        double total = 0;
-        double tidakLayak = 0;
-        try {
-            total = rs.getDouble("total_jumlah_panen");
-            tidakLayak = rs.getDouble("hasil_panen_tidak_layak");
-        } catch (SQLException ignored) {}
+        String tglAwal = rs.getString("tanggal_awal");
+        String tglAkhir = rs.getString("tanggal_akhir");
+        if (tglAwal == null) tglAwal = tgl;
+        if (tglAkhir == null) tglAkhir = tgl;
 
-        double persen = total > 0 ? (tidakLayak / total) * 100 : 0.0;
-        return new Evaluasi(idEval, tgl, tgl, total, persen, status, catatan);
+        double total = rs.getDouble("total_panen_evaluasi");
+        double persen = rs.getDouble("persen_tidak_layak");
+        return new Evaluasi(idEval, tglAwal, tglAkhir, total, persen, status, catatan);
     }
 }
-

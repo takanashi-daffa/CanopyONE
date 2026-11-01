@@ -1,5 +1,7 @@
 package view;
 
+import component.DateTextField;
+import controller.InputValidator;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.List;
@@ -16,23 +18,76 @@ public class PetugasFrame extends javax.swing.JFrame {
 
     public PetugasFrame() {
         initComponents();
+        applyBranding();
         setLocationRelativeTo(null);
         initCustomData();
     }
 
+    private void applyBranding() {
+        java.awt.Image appIcon = util.Images.load("logo.png");
+        if (appIcon != null) setIconImage(appIcon);
+        pnlHeader.setBorder(new component.ImageBorder("header-bg.png", new java.awt.Color(4, 47, 46), 3));
+        javax.swing.ImageIcon brandIcon = util.Images.icon("logo.png", 30);
+        if (brandIcon != null) {
+            lblLogoHeader.setIcon(brandIcon);
+            lblLogoHeader.setIconTextGap(10);
+        }
+        lblLogoHeader.setForeground(java.awt.Color.WHITE);
+        lblUserInfo.setForeground(new java.awt.Color(198, 226, 219));
+    }
+
     private void initCustomData() {
+        cmbFilterKomoditas.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Semua", "Sawit", "Karet"}));
+        cmbModeRekap.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Rentang Tanggal"}));
+        tblPanen.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblPanenMouseClicked(evt);
+            }
+        });
         loadBlokComboBox();
         refreshPanenTable();
         refreshRekapTable();
         txtTanggalPanen.setText(LocalDate.now().toString());
+        LocalDate today = LocalDate.now();
+        txtTglAwal.setText(today.withDayOfMonth(1).toString());
+        txtTglAkhir.setText(today.toString());
     }
 
     private void loadBlokComboBox() {
+        String selected = cmbBlokLahan.getSelectedItem() == null ? null : cmbBlokLahan.getSelectedItem().toString();
+        String commodity = rbSawit.isSelected() ? "Sawit" : "Karet";
         cmbBlokLahan.removeAllItems();
         List<BlokLahan> bloks = DataStore.getInstance().getBlokList();
         for (BlokLahan b : bloks) {
-            cmbBlokLahan.addItem(b.toString());
+            if (commodity.equalsIgnoreCase(b.getKomoditas())) cmbBlokLahan.addItem(b.toString());
         }
+        if (selected != null) cmbBlokLahan.setSelectedItem(selected);
+    }
+
+    private Panen buildPanen(String id) {
+        String commodity = rbSawit.isSelected() ? "Sawit" : "Karet";
+        String block = cmbBlokLahan.getSelectedItem() == null ? "" : cmbBlokLahan.getSelectedItem().toString();
+        String input1 = txtInput1.getText().trim();
+        String input2 = txtInput2.getText().trim();
+        String rejectText = txtTidakLayak.getText().trim();
+        String date = txtTanggalPanen.getText().trim();
+        if (block.isEmpty() || !InputValidator.isNonNegativeNumber(input1) || !InputValidator.isNonNegativeNumber(input2)
+                || (!rejectText.isEmpty() && !InputValidator.isNonNegativeNumber(rejectText))
+                || !InputValidator.isValidDate(date)) {
+            JOptionPane.showMessageDialog(this, "Pilih blok, isi angka yang valid, dan gunakan tanggal YYYY-MM-DD.", "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+        double first = Double.parseDouble(input1);
+        double second = Double.parseDouble(input2);
+        double reject = rejectText.isEmpty() ? 0 : Double.parseDouble(rejectText);
+        double total = "Sawit".equals(commodity) ? first * 12.0 + second : first * second / 100.0;
+        if (total <= 0 || reject > total) {
+            JOptionPane.showMessageDialog(this, "Total panen harus lebih dari nol dan hasil tidak layak tidak boleh melebihi total panen.", "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+        String quality = reject / total <= 0.05 ? "Baik" : "Cukup";
+        return new Panen(id, date, block, commodity, first, second, total, reject, quality);
     }
 
     public void refreshPanenTable() {
@@ -75,6 +130,7 @@ public class PetugasFrame extends javax.swing.JFrame {
         selectedPanenId = null;
         rbSawit.setSelected(true);
         updateKomoditasLabels();
+        loadBlokComboBox();
         if (cmbBlokLahan.getItemCount() > 0) cmbBlokLahan.setSelectedIndex(0);
         txtInput1.setText("");
         txtInput2.setText("");
@@ -626,10 +682,12 @@ public class PetugasFrame extends javax.swing.JFrame {
 
     private void rbSawitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbSawitActionPerformed
         updateKomoditasLabels();
+        loadBlokComboBox();
     }//GEN-LAST:event_rbSawitActionPerformed
 
     private void rbKaretActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbKaretActionPerformed
         updateKomoditasLabels();
+        loadBlokComboBox();
     }//GEN-LAST:event_rbKaretActionPerformed
 
     private void tblPanenMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblPanenMouseClicked
@@ -638,7 +696,6 @@ public class PetugasFrame extends javax.swing.JFrame {
             selectedPanenId = tblPanen.getValueAt(selectedRow, 0).toString();
             txtTanggalPanen.setText(tblPanen.getValueAt(selectedRow, 1).toString());
             String blok = tblPanen.getValueAt(selectedRow, 2).toString();
-            cmbBlokLahan.setSelectedItem(blok);
             String komoditas = tblPanen.getValueAt(selectedRow, 3).toString();
             if ("Sawit".equalsIgnoreCase(komoditas)) {
                 rbSawit.setSelected(true);
@@ -646,6 +703,8 @@ public class PetugasFrame extends javax.swing.JFrame {
                 rbKaret.setSelected(true);
             }
             updateKomoditasLabels();
+            loadBlokComboBox();
+            cmbBlokLahan.setSelectedItem(blok);
 
             for (Panen p : DataStore.getInstance().getPanenList()) {
                 if (p.getIdPanen().equalsIgnoreCase(selectedPanenId)) {
@@ -659,33 +718,14 @@ public class PetugasFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_tblPanenMouseClicked
 
     private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
-        try {
-            String komoditas = rbSawit.isSelected() ? "Sawit" : "Karet";
-            String blok = cmbBlokLahan.getSelectedItem() != null ? cmbBlokLahan.getSelectedItem().toString() : "";
-            double in1 = Double.parseDouble(txtInput1.getText().trim());
-            double in2 = Double.parseDouble(txtInput2.getText().trim());
-            double reject = txtTidakLayak.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtTidakLayak.getText().trim());
-            String tgl = txtTanggalPanen.getText().trim();
-
-            if (tgl.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Tanggal panen wajib diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            double totalPanen = "Sawit".equalsIgnoreCase(komoditas) ? (in1 * 12.0 + in2) : (in1 * (in2 / 100.0) * 1.0 + in1 * 0.8);
-            String kualitas = (reject / (totalPanen > 0 ? totalPanen : 1) < 0.05) ? "Baik" : "Cukup";
-
-            String newId = DataStore.getInstance().generatePanenId();
-            Panen p = new Panen(newId, tgl, blok, komoditas, in1, in2, totalPanen, reject, kualitas);
-            DataStore.getInstance().addPanen(p);
-
-            JOptionPane.showMessageDialog(this, "Data panen berhasil disimpan dengan ID: " + newId);
-            refreshPanenTable();
-            refreshRekapTable();
-            resetPanenForm();
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Nilai input harus berupa angka yang valid!", "Format Salah", JOptionPane.ERROR_MESSAGE);
-        }
+        String newId = DataStore.getInstance().generatePanenId();
+        Panen panen = buildPanen(newId);
+        if (panen == null) return;
+        DataStore.getInstance().addPanen(panen);
+        JOptionPane.showMessageDialog(this, "Data panen berhasil disimpan dengan ID: " + newId);
+        refreshPanenTable();
+        refreshRekapTable();
+        resetPanenForm();
     }//GEN-LAST:event_btnSimpanActionPerformed
 
     private void btnPerbaruiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPerbaruiActionPerformed
@@ -693,27 +733,13 @@ public class PetugasFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Pilih data panen pada tabel terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        try {
-            String komoditas = rbSawit.isSelected() ? "Sawit" : "Karet";
-            String blok = cmbBlokLahan.getSelectedItem() != null ? cmbBlokLahan.getSelectedItem().toString() : "";
-            double in1 = Double.parseDouble(txtInput1.getText().trim());
-            double in2 = Double.parseDouble(txtInput2.getText().trim());
-            double reject = txtTidakLayak.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtTidakLayak.getText().trim());
-            String tgl = txtTanggalPanen.getText().trim();
-
-            double totalPanen = "Sawit".equalsIgnoreCase(komoditas) ? (in1 * 12.0 + in2) : (in1 * (in2 / 100.0) * 1.0 + in1 * 0.8);
-            String kualitas = (reject / (totalPanen > 0 ? totalPanen : 1) < 0.05) ? "Baik" : "Cukup";
-
-            Panen p = new Panen(selectedPanenId, tgl, blok, komoditas, in1, in2, totalPanen, reject, kualitas);
-            DataStore.getInstance().updatePanen(p);
-
-            JOptionPane.showMessageDialog(this, "Data panen berhasil diperbarui!");
-            refreshPanenTable();
-            refreshRekapTable();
-            resetPanenForm();
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Nilai input harus berupa angka yang valid!", "Format Salah", JOptionPane.ERROR_MESSAGE);
-        }
+        Panen panen = buildPanen(selectedPanenId);
+        if (panen == null) return;
+        if (!DataStore.getInstance().updatePanen(panen)) return;
+        JOptionPane.showMessageDialog(this, "Data panen berhasil diperbarui!");
+        refreshPanenTable();
+        refreshRekapTable();
+        resetPanenForm();
     }//GEN-LAST:event_btnPerbaruiActionPerformed
 
     private void btnHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusActionPerformed
@@ -742,9 +768,13 @@ public class PetugasFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnResetActionPerformed
 
     private void btnTampilkanRekapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTampilkanRekapActionPerformed
-        String filterKom = cmbFilterKomoditas.getSelectedItem().toString();
+        String filterKom = cmbFilterKomoditas.getSelectedItem() == null ? "Semua" : cmbFilterKomoditas.getSelectedItem().toString();
         String tglAwal = txtTglAwal.getText().trim();
         String tglAkhir = txtTglAkhir.getText().trim();
+        if (!InputValidator.isValidOptionalDateRange(tglAwal, tglAkhir)) {
+            JOptionPane.showMessageDialog(this, "Tanggal rekap harus valid dan tanggal awal tidak boleh melewati tanggal akhir.", "Rentang Tanggal Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         DefaultTableModel model = (DefaultTableModel) tblRekap.getModel();
         model.setRowCount(0);
@@ -785,8 +815,8 @@ public class PetugasFrame extends javax.swing.JFrame {
 
     private void btnResetRekapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetRekapActionPerformed
         cmbFilterKomoditas.setSelectedIndex(0);
-        txtTglAwal.setText("2026-10-01");
-        txtTglAkhir.setText("2026-10-31");
+        txtTglAwal.setText("");
+        txtTglAkhir.setText("");
         refreshRekapTable();
     }//GEN-LAST:event_btnResetRekapActionPerformed
 

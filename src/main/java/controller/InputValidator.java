@@ -1,6 +1,6 @@
 package controller;
 
-import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 
 /**
@@ -17,7 +17,7 @@ public class InputValidator {
         if (!isValidString(str)) return false;
         try {
             double val = Double.parseDouble(str.trim());
-            return val > 0;
+            return Double.isFinite(val) && val > 0;
         } catch (NumberFormatException e) {
             return false;
         }
@@ -27,7 +27,7 @@ public class InputValidator {
         if (!isValidString(str)) return false;
         try {
             double val = Double.parseDouble(str.trim());
-            return val >= 0;
+            return Double.isFinite(val) && val >= 0;
         } catch (NumberFormatException e) {
             return false;
         }
@@ -47,12 +47,22 @@ public class InputValidator {
         if (!isValidString(dateStr)) return false;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         sdf.setLenient(false);
-        try {
-            sdf.parse(dateStr.trim());
-            return true;
-        } catch (ParseException e) {
-            return false;
-        }
+        String value = dateStr.trim();
+        ParsePosition position = new ParsePosition(0);
+        return sdf.parse(value, position) != null && position.getIndex() == value.length();
+    }
+
+    public static boolean isValidDateRange(String startDate, String endDate) {
+        return isValidDate(startDate) && isValidDate(endDate)
+                && startDate.trim().compareTo(endDate.trim()) <= 0;
+    }
+
+    public static boolean isValidOptionalDateRange(String startDate, String endDate) {
+        String start = startDate == null ? "" : startDate.trim();
+        String end = endDate == null ? "" : endDate.trim();
+        if (!start.isEmpty() && !isValidDate(start)) return false;
+        if (!end.isEmpty() && !isValidDate(end)) return false;
+        return start.isEmpty() || end.isEmpty() || start.compareTo(end) <= 0;
     }
 
     public static double parseDoubleSafe(String str, double defaultVal) {

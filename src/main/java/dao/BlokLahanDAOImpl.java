@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlokLahanDAOImpl implements BlokLahanDAO {
-    private static final String SELECT_ALL = "SELECT kode_blok_lahan, nama_blok_lahan, luas_blok_lahan, komoditas, tahun_tanam FROM blok_lahan ORDER BY kode_blok_lahan";
-    private static final String SELECT_BY_KODE = "SELECT kode_blok_lahan, nama_blok_lahan, luas_blok_lahan, komoditas, tahun_tanam FROM blok_lahan WHERE kode_blok_lahan = ?";
-    private static final String INSERT = "INSERT INTO blok_lahan (kode_blok_lahan, nama_blok_lahan, luas_blok_lahan, komoditas, tahun_tanam) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE nama_blok_lahan=?, luas_blok_lahan=?, komoditas=?, tahun_tanam=?";
-    private static final String UPDATE = "UPDATE blok_lahan SET nama_blok_lahan=?, luas_blok_lahan=?, komoditas=?, tahun_tanam=? WHERE kode_blok_lahan=?";
+    private static final String SELECT_ALL = "SELECT kode_blok_lahan, nama_blok_lahan, luas_blok_lahan, komoditas FROM blok_lahan ORDER BY kode_blok_lahan";
+    private static final String SELECT_BY_KODE = "SELECT kode_blok_lahan, nama_blok_lahan, luas_blok_lahan, komoditas FROM blok_lahan WHERE kode_blok_lahan = ?";
+    private static final String INSERT = "INSERT INTO blok_lahan (kode_blok_lahan, nama_blok_lahan, luas_blok_lahan, komoditas) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE nama_blok_lahan=?, luas_blok_lahan=?, komoditas=?";
+    private static final String UPDATE = "UPDATE blok_lahan SET nama_blok_lahan=?, luas_blok_lahan=?, komoditas=? WHERE kode_blok_lahan=?";
     private static final String DELETE = "DELETE FROM blok_lahan WHERE kode_blok_lahan=?";
 
     @Override
@@ -54,12 +54,9 @@ public class BlokLahanDAOImpl implements BlokLahanDAO {
             ps.setString(2, b.getNamaLahan());
             ps.setDouble(3, b.getLuasLahan());
             ps.setString(4, b.getKomoditas());
-            ps.setInt(5, b.getTahunTanam());
-
-            ps.setString(6, b.getNamaLahan());
-            ps.setDouble(7, b.getLuasLahan());
-            ps.setString(8, b.getKomoditas());
-            ps.setInt(9, b.getTahunTanam());
+            ps.setString(5, b.getNamaLahan());
+            ps.setDouble(6, b.getLuasLahan());
+            ps.setString(7, b.getKomoditas());
             ps.executeUpdate();
         }
     }
@@ -72,8 +69,7 @@ public class BlokLahanDAOImpl implements BlokLahanDAO {
             ps.setString(1, b.getNamaLahan());
             ps.setDouble(2, b.getLuasLahan());
             ps.setString(3, b.getKomoditas());
-            ps.setInt(4, b.getTahunTanam());
-            ps.setString(5, b.getKodeBlok());
+            ps.setString(4, b.getKodeBlok());
             ps.executeUpdate();
         }
     }

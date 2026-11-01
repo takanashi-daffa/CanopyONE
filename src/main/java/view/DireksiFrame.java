@@ -1,6 +1,9 @@
 package view;
 
+import component.DateTextField;
+import controller.InputValidator;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -15,15 +18,41 @@ public class DireksiFrame extends javax.swing.JFrame {
 
     public DireksiFrame() {
         initComponents();
+        applyBranding();
         setLocationRelativeTo(null);
         initCustomData();
     }
 
+    private void applyBranding() {
+        java.awt.Image appIcon = util.Images.load("logo.png");
+        if (appIcon != null) setIconImage(appIcon);
+        pnlHeader.setBorder(new component.ImageBorder("header-bg.png", new java.awt.Color(4, 47, 46), 3));
+        javax.swing.ImageIcon brandIcon = util.Images.icon("logo.png", 30);
+        if (brandIcon != null) {
+            lblLogoHeader.setIcon(brandIcon);
+            lblLogoHeader.setIconTextGap(10);
+        }
+        lblLogoHeader.setForeground(java.awt.Color.WHITE);
+        lblUserInfo.setForeground(new java.awt.Color(198, 226, 219));
+    }
+
     private void initCustomData() {
+        cmbFilterKomoditas.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Semua", "Sawit", "Karet"}));
+        cmbModeRekap.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Rentang Tanggal"}));
+        tblEvaluasi.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblEvaluasiMouseClicked(evt);
+            }
+        });
         refreshRekapTable();
         refreshEvalTable();
-        txtEvalAwal.setText("2026-10-01");
-        txtEvalAkhir.setText("2026-10-31");
+        LocalDate today = LocalDate.now();
+        String start = today.withDayOfMonth(1).toString();
+        txtEvalAwal.setText(start);
+        txtEvalAkhir.setText(today.toString());
+        txtTglAwal.setText(start);
+        txtTglAkhir.setText(today.toString());
     }
 
     public void refreshRekapTable() {
@@ -62,8 +91,9 @@ public class DireksiFrame extends javax.swing.JFrame {
 
     private void resetEvalForm() {
         selectedEvalId = null;
-        txtEvalAwal.setText("2026-10-01");
-        txtEvalAkhir.setText("2026-10-31");
+        LocalDate today = LocalDate.now();
+        txtEvalAwal.setText(today.withDayOfMonth(1).toString());
+        txtEvalAkhir.setText(today.toString());
         lblTotalBulan.setText("0.00 Kg");
         lblPersenTidakLayak.setText("0.00%");
         txtStatusEval.setText("");
@@ -642,9 +672,13 @@ public class DireksiFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     private void btnTampilkanRekapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTampilkanRekapActionPerformed
-        String filterKom = cmbFilterKomoditas.getSelectedItem().toString();
+        String filterKom = cmbFilterKomoditas.getSelectedItem() == null ? "Semua" : cmbFilterKomoditas.getSelectedItem().toString();
         String tglAwal = txtTglAwal.getText().trim();
         String tglAkhir = txtTglAkhir.getText().trim();
+        if (!InputValidator.isValidOptionalDateRange(tglAwal, tglAkhir)) {
+            JOptionPane.showMessageDialog(this, "Tanggal rekap harus valid dan tanggal awal tidak boleh melewati tanggal akhir.", "Rentang Tanggal Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         DefaultTableModel model = (DefaultTableModel) tblRekap.getModel();
         model.setRowCount(0);
@@ -685,14 +719,18 @@ public class DireksiFrame extends javax.swing.JFrame {
 
     private void btnResetRekapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetRekapActionPerformed
         cmbFilterKomoditas.setSelectedIndex(0);
-        txtTglAwal.setText("2026-10-01");
-        txtTglAkhir.setText("2026-10-31");
+        txtTglAwal.setText("");
+        txtTglAkhir.setText("");
         refreshRekapTable();
     }//GEN-LAST:event_btnResetRekapActionPerformed
 
     private void btnHitungMetrikActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHitungMetrikActionPerformed
         String tglAwal = txtEvalAwal.getText().trim();
         String tglAkhir = txtEvalAkhir.getText().trim();
+        if (!InputValidator.isValidDateRange(tglAwal, tglAkhir)) {
+            JOptionPane.showMessageDialog(this, "Masukkan rentang tanggal valid dengan tanggal awal sebelum atau sama dengan tanggal akhir.", "Rentang Tanggal Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         double[] metrics = DataStore.getInstance().calculateMetrics(tglAwal, tglAkhir);
 
         lblTotalBulan.setText(df.format(metrics[0]) + " Kg");
@@ -700,7 +738,7 @@ public class DireksiFrame extends javax.swing.JFrame {
 
         if (txtStatusEval.getText().trim().isEmpty()) {
             if (metrics[1] <= 4.0) {
-                txtStatusEval.setText("Sesuai Target");
+                txtStatusEval.setText("Selesai");
             } else {
                 txtStatusEval.setText("Perlu Peningkatan");
             }
@@ -710,12 +748,16 @@ public class DireksiFrame extends javax.swing.JFrame {
     private void btnSimpanEvalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanEvalActionPerformed
         String tglAwal = txtEvalAwal.getText().trim();
         String tglAkhir = txtEvalAkhir.getText().trim();
+        if (!InputValidator.isValidDateRange(tglAwal, tglAkhir)) {
+            JOptionPane.showMessageDialog(this, "Masukkan rentang tanggal valid dengan tanggal awal sebelum atau sama dengan tanggal akhir.", "Rentang Tanggal Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         double[] metrics = DataStore.getInstance().calculateMetrics(tglAwal, tglAkhir);
 
         String status = txtStatusEval.getText().trim();
         String catatan = txtCatatanTindakLanjut.getText().trim();
 
-        if (status.isEmpty()) status = "Selesai Evaluasi Direksi";
+        if (status.isEmpty()) status = "Selesai";
         String newId = DataStore.getInstance().generateEvalId();
 
         Evaluasi ev = new Evaluasi(newId, tglAwal, tglAkhir, metrics[0], metrics[1], status, catatan);
@@ -732,17 +774,18 @@ public class DireksiFrame extends javax.swing.JFrame {
             return;
         }
 
+        String tglAwal = txtEvalAwal.getText().trim();
+        String tglAkhir = txtEvalAkhir.getText().trim();
+        if (!InputValidator.isValidDateRange(tglAwal, tglAkhir)) {
+            JOptionPane.showMessageDialog(this, "Masukkan rentang tanggal valid dengan tanggal awal sebelum atau sama dengan tanggal akhir.", "Rentang Tanggal Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int confirm = JOptionPane.showConfirmDialog(this,
             "Apakah Anda yakin ingin menyimpan perubahan evaluasi?",
             "Konfirmasi Perubahan",
             JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.NO_OPTION) {
-            txtStatusEval.requestFocus();
-            return;
-        }
+        if (confirm != JOptionPane.YES_OPTION) return;
 
-        String tglAwal = txtEvalAwal.getText().trim();
-        String tglAkhir = txtEvalAkhir.getText().trim();
         double[] metrics = DataStore.getInstance().calculateMetrics(tglAwal, tglAkhir);
         String status = txtStatusEval.getText().trim();
         String catatan = txtCatatanTindakLanjut.getText().trim();

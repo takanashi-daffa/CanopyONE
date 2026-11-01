@@ -33,28 +33,30 @@ public class Koneksi {
 
         String[] hosts = new String[] { "localhost", "127.0.0.1" };
         String[] passes = new String[] { "", "root" };
-        String dbName = "canopy";
+        String[] dbNames = new String[] { "db_pt_canopy", "canopy" };
         String params = "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
 
-        for (String host : hosts) {
-            for (String pass : passes) {
-                String url = "jdbc:mysql://" + host + ":3306/" + dbName + params;
-                try {
-                    if (loadedDriver != null) {
-                        Properties props = new Properties();
-                        props.put("user", "root");
-                        props.put("password", pass);
-                        conn = loadedDriver.connect(url, props);
+        for (String dbName : dbNames) {
+            for (String host : hosts) {
+                for (String pass : passes) {
+                    String url = "jdbc:mysql://" + host + ":3306/" + dbName + params;
+                    try {
+                        if (loadedDriver != null) {
+                            Properties props = new Properties();
+                            props.put("user", "root");
+                            props.put("password", pass);
+                            conn = loadedDriver.connect(url, props);
+                        }
+                        if (conn == null) {
+                            conn = DriverManager.getConnection(url, "root", pass);
+                        }
+                        if (conn != null && !conn.isClosed()) {
+                            lastError = null;
+                            return conn;
+                        }
+                    } catch (Exception e) {
+                        lastError = e.getMessage() != null ? e.getMessage() : e.toString();
                     }
-                    if (conn == null) {
-                        conn = DriverManager.getConnection(url, "root", pass);
-                    }
-                    if (conn != null && !conn.isClosed()) {
-                        lastError = null;
-                        return conn;
-                    }
-                } catch (Exception e) {
-                    lastError = e.getMessage() != null ? e.getMessage() : e.toString();
                 }
             }
         }

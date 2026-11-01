@@ -8,7 +8,30 @@ public class LoginFrame extends javax.swing.JFrame {
 
     public LoginFrame() {
         initComponents();
+        applyCover();
+        setSize(900, 620);
         setLocationRelativeTo(null);
+    }
+
+    private void applyCover() {
+        component.CoverPanel cover = new component.CoverPanel("cover-login.png",
+                "Panen Terukur, Kebun Terjaga",
+                "Catat hasil panen sawit dan karet, pantau produktivitas blok, dan evaluasi kinerja kebun dalam satu tempat.",
+                "CanopyONE  |  Sistem Informasi Panen Sawit & Karet");
+
+        java.awt.Container content = getContentPane();
+        content.removeAll();
+        content.setLayout(new java.awt.BorderLayout());
+
+        javax.swing.JPanel pnlForm = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        pnlForm.setBackground(java.awt.Color.WHITE);
+        pnlForm.add(panelCard, new java.awt.GridBagConstraints());
+
+        content.add(cover, java.awt.BorderLayout.WEST);
+        content.add(pnlForm, java.awt.BorderLayout.CENTER);
+        cover.setPreferredSize(new java.awt.Dimension(430, 620));
+        content.revalidate();
+        content.repaint();
     }
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -78,7 +101,7 @@ public class LoginFrame extends javax.swing.JFrame {
         lblHint.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
         lblHint.setForeground(new java.awt.Color(156, 163, 175));
         lblHint.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblHint.setText("Demo: admin_sawit | budi_petugas | direksi_agri");
+        lblHint.setText("Demo: ahmad.admin | andi.petugas | budi.direksi");
 
         javax.swing.GroupLayout panelCardLayout = new javax.swing.GroupLayout(panelCard);
         panelCard.setLayout(panelCardLayout);
@@ -162,33 +185,22 @@ public class LoginFrame extends javax.swing.JFrame {
         }
 
         Pegawai auth = DataStore.getInstance().findPegawai(user, pass);
-        if (auth != null) {
-            DataStore.getInstance().setCurrentUser(auth.getUsername());
-            if ("Admin".equalsIgnoreCase(auth.getRole()) || user.toLowerCase().contains("admin")) {
-                new AdminFrame().setVisible(true);
-                this.dispose();
-            } else if ("Direksi".equalsIgnoreCase(auth.getRole()) || user.toLowerCase().contains("direksi")) {
-                new DireksiFrame().setVisible(true);
-                this.dispose();
-            } else {
-                new PetugasFrame().setVisible(true);
-                this.dispose();
-            }
+        if (auth == null) {
+            JOptionPane.showMessageDialog(this, "Username atau password tidak valid!", "Login Gagal", JOptionPane.ERROR_MESSAGE);
+            txtPassword.setText("");
+            txtPassword.requestFocusInWindow();
             return;
         }
 
-        DataStore.getInstance().setCurrentUser(user);
-
-        if (user.toLowerCase().contains("admin")) {
+        DataStore.getInstance().setCurrentUser(auth.getUsername());
+        if ("Admin".equalsIgnoreCase(auth.getRole())) {
             new AdminFrame().setVisible(true);
-            this.dispose();
-        } else if (user.toLowerCase().contains("direksi")) {
+        } else if ("Direksi".equalsIgnoreCase(auth.getRole())) {
             new DireksiFrame().setVisible(true);
-            this.dispose();
         } else {
             new PetugasFrame().setVisible(true);
-            this.dispose();
         }
+        this.dispose();
     }//GEN-LAST:event_btnLoginActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

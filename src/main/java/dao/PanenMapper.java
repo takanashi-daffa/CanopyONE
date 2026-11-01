@@ -31,15 +31,15 @@ final class PanenMapper {
         double input1 = 0;
         double input2 = 0;
         try {
-            input1 = rs.getDouble("jumlah_tandan");
-            input2 = rs.getDouble("jumlah_brondolan");
-            if (input1 == 0 && input2 == 0) {
-                input1 = rs.getDouble("kadar_air_karet");
-                input2 = rs.getDouble("berat_kotor_karet");
+            if ("Karet".equalsIgnoreCase(kom)) {
+                input1 = rs.getDouble("berat_kotor_karet");
+                input2 = rs.getDouble("kadar_air_karet");
+            } else {
+                input1 = rs.getDouble("jumlah_tandan");
+                input2 = rs.getDouble("jumlah_brondolan");
             }
         } catch (SQLException ignored) {}
 
         return new Panen(idPanen, tgl, blokDisplay, kom, input1, input2, total, tidakLayak, kualitas);
     }
 }
-

@@ -32,10 +32,10 @@ public class DataStore {
     }
 
     private void initSampleData() {
-        blokList.add(new BlokLahan("SW001", "Blok Sawit A01", 12.5, "Sawit", 2018));
-        blokList.add(new BlokLahan("SW002", "Blok Sawit A02", 10.0, "Sawit", 2019));
-        blokList.add(new BlokLahan("KR001", "Blok Karet B01", 8.0, "Karet", 2017));
-        blokList.add(new BlokLahan("KR002", "Blok Karet B02", 15.0, "Karet", 2016));
+        blokList.add(new BlokLahan("SW001", "Blok Sawit A01", 12.5, "Sawit"));
+        blokList.add(new BlokLahan("SW002", "Blok Sawit A02", 10.0, "Sawit"));
+        blokList.add(new BlokLahan("KR001", "Blok Karet B01", 8.0, "Karet"));
+        blokList.add(new BlokLahan("KR002", "Blok Karet B02", 15.0, "Karet"));
 
         pegawaiList.add(new Pegawai("P001", "Budi Santoso", "budi_petugas", "12345", "081234567890", "Petugas"));
         pegawaiList.add(new Pegawai("P002", "Siti Rahma", "admin_sawit", "admin123", "081298765432", "Admin"));
@@ -75,7 +75,7 @@ public class DataStore {
                 String nama = rsBlok.getString("nama_blok_lahan");
                 double luas = rsBlok.getDouble("luas_blok_lahan");
                 String kom = rsBlok.getString("komoditas");
-                blokList.add(new BlokLahan(kode, nama, luas, kom, 2020));
+                blokList.add(new BlokLahan(kode, nama, luas, kom));
             }
             rsBlok.close();
 
@@ -109,13 +109,13 @@ public class DataStore {
             ResultSet rsPanen = st.executeQuery(
                 "SELECT ap.id_panen, ap.tanggal_panen, ap.total_jumlah_panen, ap.hasil_panen_tidak_layak, ap.kualitas_panen, " +
                 "       ap.kode_blok_lahan, bl.nama_blok_lahan, bl.komoditas, " +
-                "       ps.jumlah_tandan, ps.jumlah_brondolan, " +
+                "       pp.nama_produk, pp.tahun_tanam, sw.jumlah_tandan, sw.jumlah_brondolan, " +
                 "       kr.kadar_air_karet, kr.berat_kotor_karet " +
                 "FROM aktivitas_panen ap " +
                 "LEFT JOIN blok_lahan bl ON ap.kode_blok_lahan = bl.kode_blok_lahan " +
-                "LEFT JOIN produk_panen pp ON ap.id_panen = pp.aktivitas_panen_id_panen " +
-                "LEFT JOIN panen_sawit ps ON pp.id_produk = ps.id_produk " +
-                "LEFT JOIN karet kr ON pp.id_produk = kr.id_produk"
+                "LEFT JOIN produk_panen pp ON pp.aktivitas_panen_id_panen = ap.id_panen " +
+                "LEFT JOIN sawit sw ON sw.id_produk = pp.id_produk " +
+                "LEFT JOIN karet kr ON kr.id_produk = pp.id_produk"
             );
             boolean hasPanen = false;
             while (rsPanen.next()) {
@@ -144,8 +144,10 @@ public class DataStore {
             rsPanen.close();
 
             ResultSet rsEval = st.executeQuery(
-                "SELECT ep.id_evaluasi, ep.tanggal_evaluasi, ep.status, ep.catatan_tindak_lanjut, " +
-                "       ap.total_jumlah_panen, ap.hasil_panen_tidak_layak " +
+                "SELECT ep.id_evaluasi, ep.tanggal_evaluasi, ep.status, ep.catatan_tindak_lanjut, ep.catatan_evaluasi, " +
+                "       ep.tanggal_evaluasi AS tanggal_awal, ep.tanggal_evaluasi AS tanggal_akhir, " +
+                "       COALESCE(ap.total_jumlah_panen, 0) AS total_panen_evaluasi, " +
+                "       CASE WHEN ap.total_jumlah_panen > 0 THEN (ap.hasil_panen_tidak_layak / ap.total_jumlah_panen) * 100 ELSE 0 END AS persen_tidak_layak " +
                 "FROM evaluasi_panen ep " +
                 "LEFT JOIN aktivitas_panen ap ON ep.aktivitas_panen_id_panen = ap.id_panen"
             );
@@ -156,24 +158,48 @@ public class DataStore {
                     hasEval = true;
                 }
                 String idEv = rsEval.getString("id_evaluasi");
-                String tglEv = rsEval.getString("tanggal_evaluasi");
+                String tglAwal = rsEval.getString("tanggal_awal");
+                String tglAkhir = rsEval.getString("tanggal_akhir");
                 String status = rsEval.getString("status");
                 String catatan = rsEval.getString("catatan_tindak_lanjut");
-                double tot = rsEval.getDouble("total_jumlah_panen");
-                double rej = rsEval.getDouble("hasil_panen_tidak_layak");
-                double pct = tot > 0 ? (rej / tot) * 100.0 : 0.0;
-                evaluasiList.add(new Evaluasi(idEv, tglEv, tglEv, tot, pct, status, catatan));
+                double tot = rsEval.getDouble("total_panen_evaluasi");
+                double pct = rsEval.getDouble("persen_tidak_layak");
+                evaluasiList.add(new Evaluasi(idEv, tglAwal, tglAkhir, tot, pct, status, catatan));
                 try {
                     int num = Integer.parseInt(idEv.replaceAll("\\D+", ""));
                     if (num >= evalCounter) evalCounter = num + 1;
                 } catch (Exception ignored) {}
             }
             rsEval.close();
+
+            try {
+                ResultSet rsHistory = st.executeQuery(
+                    "SELECT id_riwayat, waktu_perubahan, jenis_tindakan, id_user, id_panen, data_sebelum, data_setelah FROM riwayat_perubahan ORDER BY waktu_perubahan DESC, id_riwayat DESC"
+                );
+                boolean hasHistory = false;
+                while (rsHistory.next()) {
+                    if (!hasHistory) {
+                        riwayatList.clear();
+                        hasHistory = true;
+                    }
+                    String id = rsHistory.getString("id_riwayat");
+                    riwayatList.add(new Riwayat(id, rsHistory.getString("waktu_perubahan"),
+                            rsHistory.getString("jenis_tindakan"), rsHistory.getString("id_user"),
+                            rsHistory.getString("id_panen"), rsHistory.getString("data_sebelum"),
+                            rsHistory.getString("data_setelah")));
+                    try {
+                        int num = Integer.parseInt(id.replaceAll("\\D+", ""));
+                        if (num >= riwayatCounter) riwayatCounter = num + 1;
+                    } catch (Exception ignored) {}
+                }
+                rsHistory.close();
+            } catch (Exception ignored) {}
             st.close();
         } catch (Exception e) {
             System.err.println("Gagal memuat database canopy: " + e.getMessage());
         }
     }
+
 
     public synchronized Pegawai findPegawai(String userOrId, String password) {
         for (Pegawai p : pegawaiList) {
@@ -200,10 +226,10 @@ public class DataStore {
                 );
                 ps.setString(1, b.getKodeBlok());
                 ps.setString(2, b.getNamaLahan());
-                ps.setInt(3, (int) Math.round(b.getLuasLahan()));
+                ps.setDouble(3, b.getLuasLahan());
                 ps.setString(4, b.getKomoditas());
                 ps.setString(5, b.getNamaLahan());
-                ps.setInt(6, (int) Math.round(b.getLuasLahan()));
+                ps.setDouble(6, b.getLuasLahan());
                 ps.setString(7, b.getKomoditas());
                 ps.executeUpdate();
                 ps.close();
@@ -223,7 +249,7 @@ public class DataStore {
                             "UPDATE blok_lahan SET nama_blok_lahan=?, luas_blok_lahan=?, komoditas=? WHERE kode_blok_lahan=?"
                         );
                         ps.setString(1, b.getNamaLahan());
-                        ps.setInt(2, (int) Math.round(b.getLuasLahan()));
+                        ps.setDouble(2, b.getLuasLahan());
                         ps.setString(3, b.getKomoditas());
                         ps.setString(4, b.getKodeBlok());
                         ps.executeUpdate();
@@ -254,6 +280,26 @@ public class DataStore {
     }
 
     public synchronized List<Pegawai> getPegawaiList() { return new ArrayList<>(pegawaiList); }
+    public synchronized String generatePegawaiId() {
+        int candidate = 1;
+        while (true) {
+            String id = String.format("P%03d", candidate++);
+            boolean exists = false;
+            for (Pegawai pegawai : pegawaiList) {
+                if (pegawai.getIdPegawai().equalsIgnoreCase(id)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) return id;
+        }
+    }
+    public synchronized Pegawai findPegawaiById(String id) {
+        for (Pegawai pegawai : pegawaiList) {
+            if (pegawai.getIdPegawai().equalsIgnoreCase(id)) return pegawai;
+        }
+        return null;
+    }
     public synchronized void addPegawai(Pegawai p) {
         pegawaiList.add(p);
         try {
@@ -274,6 +320,7 @@ public class DataStore {
                 ps.setString(9, p.getNoTelp());
                 ps.executeUpdate();
                 ps.close();
+                syncRole(c, p.getIdPegawai(), p.getRole());
             }
         } catch (Exception e) {
             System.err.println("Gagal simpan user: " + e.getMessage());
@@ -297,6 +344,7 @@ public class DataStore {
                         ps.setString(5, p.getIdPegawai());
                         ps.executeUpdate();
                         ps.close();
+                        syncRole(c, p.getIdPegawai(), p.getRole());
                     }
                 } catch (Exception e) {
                     System.err.println("Gagal update user: " + e.getMessage());
@@ -306,6 +354,22 @@ public class DataStore {
         }
         return false;
     }
+    private void syncRole(Connection c, String userId, String role) throws Exception {
+        for (String table : new String[]{"admin", "direksi", "petugas"}) {
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM " + table + " WHERE id_user=?")) {
+                ps.setString(1, userId);
+                ps.executeUpdate();
+            }
+        }
+        String table = "petugas";
+        if ("Admin".equalsIgnoreCase(role)) table = "admin";
+        else if ("Direksi".equalsIgnoreCase(role)) table = "direksi";
+        try (PreparedStatement ps = c.prepareStatement("INSERT INTO " + table + " (id_user) VALUES (?)")) {
+            ps.setString(1, userId);
+            ps.executeUpdate();
+        }
+    }
+
     public synchronized boolean deletePegawai(String idOrUser) {
         boolean removed = pegawaiList.removeIf(p -> p.getIdPegawai().equalsIgnoreCase(idOrUser) || p.getUsername().equalsIgnoreCase(idOrUser));
         try {
@@ -333,32 +397,108 @@ public class DataStore {
         try {
             Connection c = Koneksi.getKoneksi();
             if (c != null) {
-                String kodeBlok = p.getBlokLahan();
-                if (kodeBlok.contains(" - ")) {
-                    kodeBlok = kodeBlok.split(" - ")[0].trim();
-                }
-                PreparedStatement ps = c.prepareStatement(
-                    "INSERT INTO aktivitas_panen (id_panen, tanggal_panen, total_jumlah_panen, hasil_panen_tidak_layak, kualitas_panen, kode_blok_lahan) " +
-                    "VALUES (?, ?, ?, ?, ?, ?) " +
-                    "ON DUPLICATE KEY UPDATE tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=?"
-                );
+                saveAktivitasPanen(c, p, true);
+                saveProdukPanen(c, p);
+            }
+        } catch (Exception e) {
+            System.err.println("Gagal simpan panen: " + e.getMessage());
+        }
+    }
+
+    private void saveAktivitasPanen(Connection c, Panen p, boolean insert) throws Exception {
+        String kodeBlok = kodeBlok(p.getBlokLahan());
+        String sql = insert
+            ? "INSERT INTO aktivitas_panen (id_panen, tanggal_panen, total_jumlah_panen, hasil_panen_tidak_layak, kualitas_panen, kode_blok_lahan, id_user) VALUES (?, ?, ?, ?, ?, ?, ?) " +
+              "ON DUPLICATE KEY UPDATE tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=?, id_user=?"
+            : "UPDATE aktivitas_panen SET tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=? WHERE id_panen=?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            if (insert) {
                 ps.setString(1, p.getIdPanen());
                 ps.setString(2, p.getTanggal());
                 ps.setDouble(3, p.getTotalPanen());
                 ps.setInt(4, (int) Math.round(p.getTidakLayak()));
                 ps.setString(5, p.getKualitas());
                 ps.setString(6, kodeBlok);
-                ps.setString(7, p.getTanggal());
-                ps.setDouble(8, p.getTotalPanen());
-                ps.setInt(9, (int) Math.round(p.getTidakLayak()));
-                ps.setString(10, p.getKualitas());
-                ps.setString(11, kodeBlok);
-                ps.executeUpdate();
-                ps.close();
+                ps.setString(7, getCurrentUserId());
+                ps.setString(8, p.getTanggal());
+                ps.setDouble(9, p.getTotalPanen());
+                ps.setInt(10, (int) Math.round(p.getTidakLayak()));
+                ps.setString(11, p.getKualitas());
+                ps.setString(12, kodeBlok);
+                ps.setString(13, getCurrentUserId());
+            } else {
+                ps.setString(1, p.getTanggal());
+                ps.setDouble(2, p.getTotalPanen());
+                ps.setInt(3, (int) Math.round(p.getTidakLayak()));
+                ps.setString(4, p.getKualitas());
+                ps.setString(5, kodeBlok);
+                ps.setString(6, p.getIdPanen());
             }
-        } catch (Exception e) {
-            System.err.println("Gagal simpan panen: " + e.getMessage());
+            ps.executeUpdate();
         }
+    }
+
+    private void saveProdukPanen(Connection c, Panen p) throws Exception {
+        String idProduk = produkId(p.getIdPanen());
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO produk_panen (id_produk, aktivitas_panen_id_panen, nama_produk, tahun_tanam) VALUES (?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE aktivitas_panen_id_panen=?, nama_produk=?, tahun_tanam=?")) {
+            ps.setString(1, idProduk);
+            ps.setString(2, p.getIdPanen());
+            ps.setString(3, p.getKomoditas());
+            ps.setString(4, null);
+            ps.setString(5, p.getIdPanen());
+            ps.setString(6, p.getKomoditas());
+            ps.setString(7, null);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = c.prepareStatement("DELETE FROM sawit WHERE id_produk = ?")) {
+            ps.setString(1, idProduk);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = c.prepareStatement("DELETE FROM karet WHERE id_produk = ?")) {
+            ps.setString(1, idProduk);
+            ps.executeUpdate();
+        }
+        if ("Sawit".equalsIgnoreCase(p.getKomoditas())) {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "INSERT INTO sawit (id_produk, jumlah_tandan, jumlah_brondolan) VALUES (?, ?, ?)")) {
+                ps.setString(1, idProduk);
+                ps.setInt(2, (int) Math.round(p.getInput1()));
+                ps.setInt(3, (int) Math.round(p.getInput2()));
+                ps.executeUpdate();
+            }
+        } else {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "INSERT INTO karet (id_produk, kadar_air_karet, berat_kotor_karet) VALUES (?, ?, ?)")) {
+                ps.setString(1, idProduk);
+                ps.setInt(2, (int) Math.round(p.getInput2()));
+                ps.setInt(3, (int) Math.round(p.getInput1()));
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    private static String kodeBlok(String blok) {
+        String kode = blok == null ? "" : blok;
+        if (kode.contains(" - ")) kode = kode.split(" - ")[0].trim();
+        return kode;
+    }
+
+    private static String produkId(String idPanen) {
+        String digits = idPanen == null ? "" : idPanen.replaceAll("\\D+", "");
+        if (digits.isEmpty()) digits = "0";
+        return String.format("PR%03d", Integer.parseInt(digits));
+    }
+
+    public synchronized String getCurrentUserId() {
+        for (Pegawai p : pegawaiList) {
+            if (p.getUsername().equalsIgnoreCase(currentUser)) return p.getIdPegawai();
+        }
+        for (Pegawai p : pegawaiList) {
+            if ("Admin".equalsIgnoreCase(p.getRole())) return p.getIdPegawai();
+        }
+        return pegawaiList.isEmpty() ? "U001" : pegawaiList.get(0).getIdPegawai();
     }
     public synchronized boolean updatePanen(Panen p) {
         for (int i = 0; i < panenList.size(); i++) {
@@ -371,21 +511,8 @@ public class DataStore {
                 try {
                     Connection c = Koneksi.getKoneksi();
                     if (c != null) {
-                        String kodeBlok = p.getBlokLahan();
-                        if (kodeBlok.contains(" - ")) {
-                            kodeBlok = kodeBlok.split(" - ")[0].trim();
-                        }
-                        PreparedStatement ps = c.prepareStatement(
-                            "UPDATE aktivitas_panen SET tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=? WHERE id_panen=?"
-                        );
-                        ps.setString(1, p.getTanggal());
-                        ps.setDouble(2, p.getTotalPanen());
-                        ps.setInt(3, (int) Math.round(p.getTidakLayak()));
-                        ps.setString(4, p.getKualitas());
-                        ps.setString(5, kodeBlok);
-                        ps.setString(6, p.getIdPanen());
-                        ps.executeUpdate();
-                        ps.close();
+                        saveAktivitasPanen(c, p, false);
+                        saveProdukPanen(c, p);
                     }
                 } catch (Exception e) {
                     System.err.println("Gagal update panen: " + e.getMessage());
@@ -426,23 +553,40 @@ public class DataStore {
         try {
             Connection c = Koneksi.getKoneksi();
             if (c != null) {
-                PreparedStatement ps = c.prepareStatement(
-                    "INSERT INTO evaluasi_panen (id_evaluasi, tanggal_evaluasi, status, catatan_tindak_lanjut) VALUES (?, ?, ?, ?) " +
-                    "ON DUPLICATE KEY UPDATE tanggal_evaluasi=?, status=?, catatan_tindak_lanjut=?"
-                );
-                ps.setString(1, ev.getIdEval());
-                ps.setString(2, ev.getTglAkhir());
-                ps.setString(3, ev.getStatus());
-                ps.setString(4, ev.getCatatan());
-                ps.setString(5, ev.getTglAkhir());
-                ps.setString(6, ev.getStatus());
-                ps.setString(7, ev.getCatatan());
-                ps.executeUpdate();
-                ps.close();
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO evaluasi_panen (id_evaluasi, tanggal_evaluasi, status, catatan_tindak_lanjut, id_user, catatan_evaluasi) VALUES (?, ?, ?, ?, ?, ?) " +
+                        "ON DUPLICATE KEY UPDATE tanggal_evaluasi=?, status=?, catatan_tindak_lanjut=?, id_user=?, catatan_evaluasi=?")) {
+                    ps.setString(1, ev.getIdEval());
+                    ps.setString(2, ev.getTglAkhir());
+                    ps.setString(3, normalizeStatus(ev.getStatus()));
+                    ps.setString(4, ev.getCatatan());
+                    ps.setString(5, getCurrentUserId());
+                    ps.setString(6, catatanEvaluasi(ev));
+                    ps.setString(7, ev.getTglAkhir());
+                    ps.setString(8, normalizeStatus(ev.getStatus()));
+                    ps.setString(9, ev.getCatatan());
+                    ps.setString(10, getCurrentUserId());
+                    ps.setString(11, catatanEvaluasi(ev));
+                    ps.executeUpdate();
+                }
             }
         } catch (Exception e) {
             System.err.println("Gagal simpan evaluasi: " + e.getMessage());
         }
+    }
+
+    private static String normalizeStatus(String status) {
+        String value = status == null ? "" : status.trim();
+        if (value.toLowerCase().contains("selesai") || value.toLowerCase().contains("sesuai")) return "Selesai";
+        if (value.toLowerCase().contains("proses")) return "Proses";
+        if (value.toLowerCase().contains("pending") || value.toLowerCase().contains("tunda")) return "Pending";
+        if (value.isEmpty()) return "Proses";
+        return value.length() > 10 ? value.substring(0, 10) : value;
+    }
+
+    private static String catatanEvaluasi(Evaluasi ev) {
+        String catatan = ev.getCatatan() == null ? "" : ev.getCatatan().trim();
+        return catatan.isEmpty() ? "-" : catatan;
     }
     public synchronized boolean updateEvaluasi(Evaluasi ev) {
         for (int i = 0; i < evaluasiList.size(); i++) {
@@ -451,15 +595,16 @@ public class DataStore {
                 try {
                     Connection c = Koneksi.getKoneksi();
                     if (c != null) {
-                        PreparedStatement ps = c.prepareStatement(
-                            "UPDATE evaluasi_panen SET tanggal_evaluasi=?, status=?, catatan_tindak_lanjut=? WHERE id_evaluasi=?"
-                        );
-                        ps.setString(1, ev.getTglAkhir());
-                        ps.setString(2, ev.getStatus());
-                        ps.setString(3, ev.getCatatan());
-                        ps.setString(4, ev.getIdEval());
-                        ps.executeUpdate();
-                        ps.close();
+                        try (PreparedStatement ps = c.prepareStatement(
+                                "UPDATE evaluasi_panen SET tanggal_evaluasi=?, status=?, catatan_tindak_lanjut=?, id_user=?, catatan_evaluasi=? WHERE id_evaluasi=?")) {
+                            ps.setString(1, ev.getTglAkhir());
+                            ps.setString(2, normalizeStatus(ev.getStatus()));
+                            ps.setString(3, ev.getCatatan());
+                            ps.setString(4, getCurrentUserId());
+                            ps.setString(5, catatanEvaluasi(ev));
+                            ps.setString(6, ev.getIdEval());
+                            ps.executeUpdate();
+                        }
                     }
                 } catch (Exception e) {
                     System.err.println("Gagal update evaluasi: " + e.getMessage());
@@ -490,6 +635,23 @@ public class DataStore {
         String id = String.format("RW%03d", riwayatCounter++);
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         riwayatList.add(0, new Riwayat(id, time, action, currentUser, idPanen, before, after));
+        try {
+            Connection c = Koneksi.getKoneksi();
+            if (c != null) {
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO riwayat_perubahan (id_riwayat, waktu_perubahan, jenis_tindakan, id_user, id_panen, data_sebelum, data_setelah) VALUES (?, NOW(), ?, ?, ?, ?, ?)")) {
+                    ps.setString(1, id);
+                    ps.setString(2, action);
+                    ps.setString(3, currentUser);
+                    ps.setString(4, idPanen);
+                    ps.setString(5, before);
+                    ps.setString(6, after);
+                    ps.executeUpdate();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Gagal simpan riwayat: " + e.getMessage());
+        }
     }
 
     public synchronized double[] calculateMetrics(String startDate, String endDate) {

@@ -10,12 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PanenDAOImpl implements PanenDAO {
-    private static final String SELECT_BASE = 
+    private static final String SELECT_BASE =
         "SELECT ap.id_panen, ap.tanggal_panen, ap.total_jumlah_panen, ap.hasil_panen_tidak_layak, ap.kualitas_panen, " +
         "       ap.kode_blok_lahan, bl.nama_blok_lahan, bl.komoditas, " +
-        "       ap.jumlah_tandan, ap.jumlah_brondolan, ap.kadar_air_karet, ap.berat_kotor_karet " +
+        "       pp.id_produk, pp.nama_produk, pp.tahun_tanam, " +
+        "       sw.jumlah_tandan, sw.jumlah_brondolan, kr.kadar_air_karet, kr.berat_kotor_karet " +
         "FROM aktivitas_panen ap " +
-        "LEFT JOIN blok_lahan bl ON ap.kode_blok_lahan = bl.kode_blok_lahan ";
+        "LEFT JOIN blok_lahan bl ON ap.kode_blok_lahan = bl.kode_blok_lahan " +
+        "LEFT JOIN produk_panen pp ON pp.aktivitas_panen_id_panen = ap.id_panen " +
+        "LEFT JOIN sawit sw ON sw.id_produk = pp.id_produk " +
+        "LEFT JOIN karet kr ON kr.id_produk = pp.id_produk ";
 
     @Override
     public List<Panen> findAll() throws SQLException {
@@ -50,69 +54,52 @@ public class PanenDAOImpl implements PanenDAO {
     public void save(Panen p) throws SQLException {
         Connection c = Koneksi.getConnection();
         if (c == null) return;
-        String kodeBlok = p.getBlokLahan();
-        if (kodeBlok != null && kodeBlok.contains(" - ")) {
-            kodeBlok = kodeBlok.split(" - ")[0].trim();
-        }
+        String kodeBlok = kodeBlok(p.getBlokLahan());
 
-        String insert = 
-            "INSERT INTO aktivitas_panen (id_panen, tanggal_panen, total_jumlah_panen, hasil_panen_tidak_layak, kualitas_panen, kode_blok_lahan, " +
-            "jumlah_tandan, jumlah_brondolan, kadar_air_karet, berat_kotor_karet) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-            "ON DUPLICATE KEY UPDATE tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=?, " +
-            "jumlah_tandan=?, jumlah_brondolan=?, kadar_air_karet=?, berat_kotor_karet=?";
+        String insert =
+            "INSERT INTO aktivitas_panen (id_panen, tanggal_panen, total_jumlah_panen, hasil_panen_tidak_layak, kualitas_panen, kode_blok_lahan) " +
+            "VALUES (?, ?, ?, ?, ?, ?) " +
+            "ON DUPLICATE KEY UPDATE tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=?";
 
         try (PreparedStatement ps = c.prepareStatement(insert)) {
             ps.setString(1, p.getIdPanen());
             ps.setString(2, p.getTanggal());
             ps.setDouble(3, p.getTotalPanen());
-            ps.setDouble(4, p.getTidakLayak());
+            ps.setInt(4, (int) Math.round(p.getTidakLayak()));
             ps.setString(5, p.getKualitas());
             ps.setString(6, kodeBlok);
-            ps.setInt(7, "Sawit".equalsIgnoreCase(p.getKomoditas()) ? (int) Math.round(p.getInput1()) : 0);
-            ps.setInt(8, "Sawit".equalsIgnoreCase(p.getKomoditas()) ? (int) Math.round(p.getInput2()) : 0);
-            ps.setDouble(9, "Karet".equalsIgnoreCase(p.getKomoditas()) ? p.getInput1() : 0);
-            ps.setDouble(10, "Karet".equalsIgnoreCase(p.getKomoditas()) ? p.getInput2() : 0);
 
-            ps.setString(11, p.getTanggal());
-            ps.setDouble(12, p.getTotalPanen());
-            ps.setDouble(13, p.getTidakLayak());
-            ps.setString(14, p.getKualitas());
-            ps.setString(15, kodeBlok);
-            ps.setInt(16, "Sawit".equalsIgnoreCase(p.getKomoditas()) ? (int) Math.round(p.getInput1()) : 0);
-            ps.setInt(17, "Sawit".equalsIgnoreCase(p.getKomoditas()) ? (int) Math.round(p.getInput2()) : 0);
-            ps.setDouble(18, "Karet".equalsIgnoreCase(p.getKomoditas()) ? p.getInput1() : 0);
-            ps.setDouble(19, "Karet".equalsIgnoreCase(p.getKomoditas()) ? p.getInput2() : 0);
+            ps.setString(7, p.getTanggal());
+            ps.setDouble(8, p.getTotalPanen());
+            ps.setInt(9, (int) Math.round(p.getTidakLayak()));
+            ps.setString(10, p.getKualitas());
+            ps.setString(11, kodeBlok);
             ps.executeUpdate();
         }
+
+        saveProduk(c, p);
     }
 
     @Override
     public void update(Panen p) throws SQLException {
         Connection c = Koneksi.getConnection();
         if (c == null) return;
-        String kodeBlok = p.getBlokLahan();
-        if (kodeBlok != null && kodeBlok.contains(" - ")) {
-            kodeBlok = kodeBlok.split(" - ")[0].trim();
-        }
+        String kodeBlok = kodeBlok(p.getBlokLahan());
 
-        String update = 
-            "UPDATE aktivitas_panen SET tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=?, " +
-            "jumlah_tandan=?, jumlah_brondolan=?, kadar_air_karet=?, berat_kotor_karet=? WHERE id_panen=?";
+        String update =
+            "UPDATE aktivitas_panen SET tanggal_panen=?, total_jumlah_panen=?, hasil_panen_tidak_layak=?, kualitas_panen=?, kode_blok_lahan=? WHERE id_panen=?";
 
         try (PreparedStatement ps = c.prepareStatement(update)) {
             ps.setString(1, p.getTanggal());
             ps.setDouble(2, p.getTotalPanen());
-            ps.setDouble(3, p.getTidakLayak());
+            ps.setInt(3, (int) Math.round(p.getTidakLayak()));
             ps.setString(4, p.getKualitas());
             ps.setString(5, kodeBlok);
-            ps.setInt(6, "Sawit".equalsIgnoreCase(p.getKomoditas()) ? (int) Math.round(p.getInput1()) : 0);
-            ps.setInt(7, "Sawit".equalsIgnoreCase(p.getKomoditas()) ? (int) Math.round(p.getInput2()) : 0);
-            ps.setDouble(8, "Karet".equalsIgnoreCase(p.getKomoditas()) ? p.getInput1() : 0);
-            ps.setDouble(9, "Karet".equalsIgnoreCase(p.getKomoditas()) ? p.getInput2() : 0);
-            ps.setString(10, p.getIdPanen());
+            ps.setString(6, p.getIdPanen());
             ps.executeUpdate();
         }
+
+        saveProduk(c, p);
     }
 
     @Override
@@ -124,5 +111,55 @@ public class PanenDAOImpl implements PanenDAO {
             ps.executeUpdate();
         }
     }
-}
 
+    private static String kodeBlok(String blok) {
+        String kode = blok == null ? "" : blok;
+        if (kode.contains(" - ")) kode = kode.split(" - ")[0].trim();
+        return kode;
+    }
+
+    private static String produkId(String idPanen) {
+        String digits = idPanen == null ? "" : idPanen.replaceAll("\\D+", "");
+        if (digits.isEmpty()) digits = "0";
+        return String.format("PR%03d", Integer.parseInt(digits));
+    }
+
+    private void saveProduk(Connection c, Panen p) throws SQLException {
+        String idProduk = produkId(p.getIdPanen());
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO produk_panen (id_produk, aktivitas_panen_id_panen, nama_produk, tahun_tanam) VALUES (?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE aktivitas_panen_id_panen=?, nama_produk=?, tahun_tanam=?")) {
+            ps.setString(1, idProduk);
+            ps.setString(2, p.getIdPanen());
+            ps.setString(3, p.getKomoditas());
+            ps.setString(4, null);
+            ps.setString(5, p.getIdPanen());
+            ps.setString(6, p.getKomoditas());
+            ps.setString(7, null);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = c.prepareStatement("DELETE FROM sawit WHERE id_produk = ?")) {
+            ps.setString(1, idProduk);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = c.prepareStatement("DELETE FROM karet WHERE id_produk = ?")) {
+            ps.setString(1, idProduk);
+            ps.executeUpdate();
+        }
+        if ("Sawit".equalsIgnoreCase(p.getKomoditas())) {
+            try (PreparedStatement ps = c.prepareStatement("INSERT INTO sawit (id_produk, jumlah_tandan, jumlah_brondolan) VALUES (?, ?, ?)")) {
+                ps.setString(1, idProduk);
+                ps.setInt(2, (int) Math.round(p.getInput1()));
+                ps.setInt(3, (int) Math.round(p.getInput2()));
+                ps.executeUpdate();
+            }
+        } else {
+            try (PreparedStatement ps = c.prepareStatement("INSERT INTO karet (id_produk, kadar_air_karet, berat_kotor_karet) VALUES (?, ?, ?)")) {
+                ps.setString(1, idProduk);
+                ps.setInt(2, (int) Math.round(p.getInput2()));
+                ps.setInt(3, (int) Math.round(p.getInput1()));
+                ps.executeUpdate();
+            }
+        }
+    }
+}
