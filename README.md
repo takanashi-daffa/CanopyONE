@@ -54,36 +54,36 @@ Aplikasi ini menggunakan Java Swing sebagai antarmuka pengguna dan MySQL sebagai
 
 ### 🔐 Tampilan Login
 
-![Tampilan Login](<img width="428" height="585" alt="Screenshot 2026-11-02 021545" src="https://github.com/user-attachments/assets/95a7a546-a5a0-4a30-a4b0-be843f68a334" />)
+<img width="428" height="585" alt="Screenshot 2026-11-02 021545" src="https://github.com/user-attachments/assets/95a7a546-a5a0-4a30-a4b0-be843f68a334" />
 
 Halaman login merupakan tampilan awal aplikasi yang digunakan pengguna untuk memasukkan username dan password sebelum mengakses sistem.
 
 ### 🌱 Tampilan Kelola Blok Lahan
 
-![Tampilan Kelola Blok Lahan](<img width="1163" height="710" alt="Screenshot 2026-11-02 021654" src="https://github.com/user-attachments/assets/8d0db554-ebc0-48a7-ab8d-f3abcc1296ff" />)
+<img width="1163" height="710" alt="Screenshot 2026-11-02 021654" src="https://github.com/user-attachments/assets/8d0db554-ebc0-48a7-ab8d-f3abcc1296ff" />
 Halaman ini digunakan untuk mengelola data blok lahan perkebunan, meliputi kode blok, nama blok, luas lahan, komoditas, dan tahun tanam. Pengguna dapat menambahkan, mengubah, dan menghapus data blok lahan.
 
 ### 👥 Tampilan Kelola Data Pegawai
 
-![Tampilan Kelola Data Pegawai](<img width="1160" height="715" alt="Screenshot 2026-11-02 021708" src="https://github.com/user-attachments/assets/08deff6d-5c8b-41a2-8325-385d94fd242d" />)
+<img width="1160" height="715" alt="Screenshot 2026-11-02 021708" src="https://github.com/user-attachments/assets/08deff6d-5c8b-41a2-8325-385d94fd242d" />
 
 Halaman ini digunakan untuk mengelola data pegawai yang memiliki akses ke aplikasi. Informasi yang dikelola meliputi nama pegawai, username, password, nomor telepon, dan hak akses pengguna (Admin, Petugas, atau Direksi).
 
 ### 🌾 Tampilan Kelola Data Panen
 
-![Tampilan Kelola Data Panen](<img width="1167" height="713" alt="Screenshot 2026-11-02 021723" src="https://github.com/user-attachments/assets/ece5e980-1a40-45a8-9ff8-c23533cfdef5" />)
+<img width="1167" height="713" alt="Screenshot 2026-11-02 021723" src="https://github.com/user-attachments/assets/ece5e980-1a40-45a8-9ff8-c23533cfdef5" />
 
 Halaman ini digunakan untuk mencatat dan mengelola aktivitas hasil panen kelapa sawit dan karet. Data yang dikelola meliputi tanggal panen, blok lahan, komoditas, jumlah hasil panen, dan informasi kualitas hasil panen.
 
 ### 📊 Tampilan Rekapitulasi Hasil Panen
 
-![Tampilan Rekapitulasi Hasil Panen](<img width="1167" height="712" alt="Screenshot 2026-11-02 021734" src="https://github.com/user-attachments/assets/27cacda1-ab86-4ac0-ac4c-9343dd145fd2" />)
+<img width="1167" height="712" alt="Screenshot 2026-11-02 021734" src="https://github.com/user-attachments/assets/27cacda1-ab86-4ac0-ac4c-9343dd145fd2"/> 
 
 Halaman ini digunakan untuk melihat ringkasan hasil produksi perkebunan berdasarkan periode dan komoditas. Pengguna dapat menggunakan filter untuk menampilkan data rekapitulasi sesuai kebutuhan.
 
 ### 📝 Tampilan Evaluasi Hasil Panen
 
-![Tampilan Evaluasi Hasil Panen](<img width="1168" height="716" alt="Screenshot 2026-11-02 021743" src="https://github.com/user-attachments/assets/948090e1-d641-4120-a57b-fc2a2c0a6978" />)
+<img width="1168" height="716" alt="Screenshot 2026-11-02 021743" src="https://github.com/user-attachments/assets/948090e1-d641-4120-a57b-fc2a2c0a6978" />
 
 Halaman ini digunakan untuk melakukan evaluasi terhadap hasil panen berdasarkan periode tertentu. Informasi yang ditampilkan meliputi total hasil panen, hasil panen tidak layak, status evaluasi, dan catatan tindak lanjut.
 
