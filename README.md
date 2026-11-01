@@ -1,0 +1,385 @@
+<div align="center">
+
+# 🌴 CanopyONE
+
+### Sistem Informasi Pencatatan dan Pemantauan Hasil Panen Perkebunan Sawit dan Karet pada PT Canopy Berbasis Java
+
+**Kelompok 2**
+
+</div>
+
+---
+
+## 👥 Anggota Kelompok
+
+| No. | Nama | NIM |
+|:---:|---|:---:|
+| 1 | Daffa Arkhabista | 2509116018 |
+| 2 | Muhammad Fahriel | 2509116050 |
+| 3 | Alya Aulia | 2509116060 |
+| 4 | Iqbal Nuriz Ramadhan | 2509116067 |
+| 5 | Nabila Viviana Asri | 2509116098 |
+
+---
+
+## 📑 Daftar Isi
+
+1. [📖 Deskripsi Program](#-1-deskripsi-program)
+2. [🌴 Gambaran Program](#-2-gambaran-program)
+3. [💻 Implementasi Program Java](#-implementasi-program-java)
+   - [🔌 Koneksi Database](#21-koneksi-database)
+   - [🔐 Login dan Autentikasi](#22-login-dan-autentikasi)
+   - [🛡️ Pembagian Hak Akses](#23-pembagian-hak-akses)
+   - [📝 Implementasi CRUD](#24-implementasi-crud)
+     - [➕ Create (Menambahkan Data)](#241-create-menambahkan-data)
+     - [📋 Read (Menampilkan Data)](#242-read-menampilkan-data)
+     - [✏️ Update (Mengubah Data)](#243-update-mengubah-data)
+     - [🗑️ Delete (Menghapus Data)](#244-delete-menghapus-data)
+   - [✅ Validasi Input](#25-validasi-input)
+4. [🗄️ Implementasi Sistem Basis Data](#-implementasi-sistem-basis-data)
+5. [📁 Struktur Proyek](#-struktur-proyek)
+6. [📸 Dokumentasi Aplikasi](#-dokumentasi-aplikasi)
+
+---
+
+## 📖 1. Deskripsi Program
+
+CanopyONE merupakan aplikasi berbasis desktop yang dikembangkan menggunakan bahasa pemrograman Java untuk membantu proses pencatatan dan pemantauan hasil panen perkebunan sawit dan karet pada PT Canopy.
+
+Aplikasi ini menggunakan Java Swing sebagai antarmuka pengguna dan MySQL sebagai basis data. Sistem menyediakan pengelolaan data pegawai, blok lahan, hasil panen, rekapitulasi, serta evaluasi hasil panen berdasarkan hak akses pengguna.
+
+---
+
+## 🌴 2. Gambaran Program
+
+### 🔐 Tampilan Login
+
+![Tampilan Login](<img width="428" height="585" alt="Screenshot 2026-11-02 021545" src="https://github.com/user-attachments/assets/95a7a546-a5a0-4a30-a4b0-be843f68a334" />)
+
+Halaman login merupakan tampilan awal aplikasi yang digunakan pengguna untuk memasukkan username dan password sebelum mengakses sistem.
+
+### 🌱 Tampilan Kelola Blok Lahan
+
+![Tampilan Kelola Blok Lahan](<img width="1163" height="710" alt="Screenshot 2026-11-02 021654" src="https://github.com/user-attachments/assets/8d0db554-ebc0-48a7-ab8d-f3abcc1296ff" />)
+Halaman ini digunakan untuk mengelola data blok lahan perkebunan, meliputi kode blok, nama blok, luas lahan, komoditas, dan tahun tanam. Pengguna dapat menambahkan, mengubah, dan menghapus data blok lahan.
+
+### 👥 Tampilan Kelola Data Pegawai
+
+![Tampilan Kelola Data Pegawai](<img width="1160" height="715" alt="Screenshot 2026-11-02 021708" src="https://github.com/user-attachments/assets/08deff6d-5c8b-41a2-8325-385d94fd242d" />)
+
+Halaman ini digunakan untuk mengelola data pegawai yang memiliki akses ke aplikasi. Informasi yang dikelola meliputi nama pegawai, username, password, nomor telepon, dan hak akses pengguna (Admin, Petugas, atau Direksi).
+
+### 🌾 Tampilan Kelola Data Panen
+
+![Tampilan Kelola Data Panen](<img width="1167" height="713" alt="Screenshot 2026-11-02 021723" src="https://github.com/user-attachments/assets/ece5e980-1a40-45a8-9ff8-c23533cfdef5" />)
+
+Halaman ini digunakan untuk mencatat dan mengelola aktivitas hasil panen kelapa sawit dan karet. Data yang dikelola meliputi tanggal panen, blok lahan, komoditas, jumlah hasil panen, dan informasi kualitas hasil panen.
+
+### 📊 Tampilan Rekapitulasi Hasil Panen
+
+![Tampilan Rekapitulasi Hasil Panen](<img width="1167" height="712" alt="Screenshot 2026-11-02 021734" src="https://github.com/user-attachments/assets/27cacda1-ab86-4ac0-ac4c-9343dd145fd2" />)
+
+Halaman ini digunakan untuk melihat ringkasan hasil produksi perkebunan berdasarkan periode dan komoditas. Pengguna dapat menggunakan filter untuk menampilkan data rekapitulasi sesuai kebutuhan.
+
+### 📝 Tampilan Evaluasi Hasil Panen
+
+![Tampilan Evaluasi Hasil Panen](<img width="1168" height="716" alt="Screenshot 2026-11-02 021743" src="https://github.com/user-attachments/assets/948090e1-d641-4120-a57b-fc2a2c0a6978" />)
+
+Halaman ini digunakan untuk melakukan evaluasi terhadap hasil panen berdasarkan periode tertentu. Informasi yang ditampilkan meliputi total hasil panen, hasil panen tidak layak, status evaluasi, dan catatan tindak lanjut.
+
+---
+
+## 💻 3. Implementasi Program Java
+
+### 3.1 Koneksi Database
+
+Koneksi database digunakan untuk menghubungkan aplikasi Java dengan MySQL. Pengaturan koneksi terdapat pada file `Koneksi.java`.
+
+**File: `config/Koneksi.java`**
+
+```java
+public static synchronized Connection getKoneksi() {
+    try {
+        if (conn != null && !conn.isClosed()) {
+            return conn;
+        }
+    } catch (SQLException ignored) {
+        conn = null;
+    }
+
+    ensureDriver();
+
+    String[] hosts = new String[] { "localhost", "127.0.0.1" };
+    String[] passes = new String[] { "", "root" };
+    String dbName = "db_pt_canopy";
+    String params = "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+
+    for (String host : hosts) {
+        for (String pass : passes) {
+            String url = "jdbc:mysql://" + host + ":3306/" + dbName + params;
+
+            try {
+                conn = DriverManager.getConnection(url, "root", pass);
+
+                if (conn != null && !conn.isClosed()) {
+                    return conn;
+                }
+            } catch (Exception e) {
+                lastError = e.getMessage();
+            }
+        }
+    }
+
+    return null;
+}
+```
+
+Kode tersebut digunakan untuk membuat koneksi aplikasi ke database MySQL `db_pt_canopy`.
+
+### 3.2 Login dan Autentikasi
+
+Login digunakan untuk memeriksa identitas pengguna sebelum memasuki aplikasi.
+
+**File: `view/LoginFrame.java`**
+
+```java
+String user = txtUsername.getText().trim();
+String pass = new String(txtPassword.getPassword());
+
+if (user.isEmpty() || pass.isEmpty()) {
+    JOptionPane.showMessageDialog(
+        this,
+        "Username dan password wajib diisi!"
+    );
+    return;
+}
+
+Pegawai auth = DataStore.getInstance()
+        .findPegawai(user, pass);
+
+if (auth == null) {
+    JOptionPane.showMessageDialog(
+        this,
+        "Username atau password salah!"
+    );
+    txtPassword.setText("");
+    return;
+}
+```
+
+Jika data pengguna sesuai, sistem akan melanjutkan proses login dan menampilkan halaman berdasarkan peran pengguna.
+
+### 3.3 Pembagian Hak Akses
+
+Sistem memiliki tiga jenis pengguna, yaitu Admin, Petugas, dan Direksi. Pengaturan hak akses dilakukan melalui class `RoleAccess.java`.
+
+**File: `controller/RoleAccess.java`**
+
+```java
+public static boolean bolehAkses(
+        String role, Fitur fitur) {
+
+    if (fitur == null) {
+        return false;
+    }
+
+    String r = normalisasiRole(role);
+
+    if (r.equals("ADMIN")) {
+        return true;
+    }
+
+    switch (r) {
+        case "PETUGAS":
+            return fitur == Fitur.KELOLA_PANEN
+                    || fitur == Fitur.LIHAT_REKAP;
+
+        case "DIREKSI":
+            return fitur == Fitur.LIHAT_REKAP
+                    || fitur == Fitur.LIHAT_EVALUASI;
+
+        default:
+            return false;
+    }
+}
+```
+
+Pembagian hak akses pengguna:
+
+| Pengguna | Hak Akses |
+|---|---|
+| Admin | Mengelola data pegawai, blok lahan, hasil panen, dan evaluasi. |
+| Petugas | Mengelola hasil panen sawit dan karet serta melihat rekapitulasi. |
+| Direksi | Melihat rekapitulasi dan mengelola evaluasi. |
+
+### 3.4 Implementasi CRUD
+
+CRUD (Create, Read, Update, Delete) digunakan untuk mengelola data yang tersimpan di dalam database. Implementasi pengelolaan data panen terdapat pada class `DataStore.java`.
+
+#### 3.4.1 Create (Menambahkan Data)
+
+Proses Create digunakan untuk menambahkan data hasil panen baru ke database.
+
+**File: `model/DataStore.java`**
+
+```java
+public synchronized boolean addPanen(Panen p) {
+    String kodeBlok = ambilKodeBlok(p.getBlokLahan());
+    String uid = getCurrentUserId();
+
+    boolean ok = runTx(c -> {
+        exec(c,
+            "INSERT INTO aktivitas_panen " +
+            "(id_panen, tanggal_panen, total_jumlah_panen, " +
+            "hasil_panen_tidak_layak, kualitas_panen, " +
+            "kode_blok_lahan, id_user) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            p.getIdPanen(),
+            p.getTanggal(),
+            p.getTotalPanen(),
+            (int) Math.round(p.getTidakLayak()),
+            p.getKualitas(),
+            kodeBlok,
+            uid
+        );
+
+        simpanDetailPanen(c, p);
+    }, "Gagal simpan panen");
+
+    if (ok) {
+        panenList.add(p);
+    }
+
+    return ok;
+}
+```
+
+Method `addPanen()` menyimpan data utama panen ke tabel `aktivitas_panen`, kemudian menyimpan detail komoditas melalui method `simpanDetailPanen()`.
+
+#### 3.4.2 Read (Menampilkan Data)
+
+Proses Read digunakan untuk mengambil data yang tersimpan di database.
+
+**File: `model/DataStore.java`**
+
+```java
+private void loadBlok(Statement st) throws Exception {
+    List<BlokLahan> baru = new ArrayList<>();
+
+    try (ResultSet rs = st.executeQuery(
+        "SELECT kode_blok_lahan, nama_blok_lahan, " +
+        "luas_blok_lahan, komoditas " +
+        "FROM blok_lahan ORDER BY kode_blok_lahan")) {
+
+        while (rs.next()) {
+            baru.add(new BlokLahan(
+                rs.getString("kode_blok_lahan"),
+                rs.getString("nama_blok_lahan"),
+                rs.getDouble("luas_blok_lahan"),
+                rs.getString("komoditas"),
+                2020
+            ));
+        }
+    }
+
+    blokList.clear();
+    blokList.addAll(baru);
+}
+```
+
+Kode tersebut menggunakan perintah `SELECT` untuk mengambil data blok lahan, kemudian menyimpannya ke dalam `ArrayList`.
+
+#### 3.4.3 Update (Mengubah Data)
+
+Proses Update digunakan untuk memperbarui data panen yang sudah tersimpan.
+
+**File: `model/DataStore.java`**
+
+```java
+boolean ok = runTx(c -> {
+    exec(c,
+        "UPDATE aktivitas_panen SET tanggal_panen=?, " +
+        "total_jumlah_panen=?, hasil_panen_tidak_layak=?, " +
+        "kualitas_panen=?, kode_blok_lahan=? " +
+        "WHERE id_panen=?",
+        p.getTanggal(),
+        p.getTotalPanen(),
+        (int) Math.round(p.getTidakLayak()),
+        p.getKualitas(),
+        kodeBlok,
+        p.getIdPanen()
+    );
+
+    simpanDetailPanen(c, p);
+}, "Gagal update panen");
+```
+
+Perintah `UPDATE` digunakan untuk memperbarui informasi hasil panen berdasarkan ID panen.
+
+#### 3.4.4 Delete (Menghapus Data)
+
+Proses Delete digunakan untuk menghapus data panen yang tidak lagi diperlukan.
+
+**File: `model/DataStore.java`**
+
+```java
+boolean ok = runTx(c -> {
+    exec(c,
+        "DELETE FROM evaluasi_panen " +
+        "WHERE aktivitas_panen_id_panen = ?",
+        idPanen
+    );
+
+    exec(c,
+        "DELETE FROM produk_panen " +
+        "WHERE aktivitas_panen_id_panen = ?",
+        idPanen
+    );
+
+    exec(c,
+        "DELETE FROM aktivitas_panen " +
+        "WHERE id_panen = ?",
+        idPanen
+    );
+}, "Gagal hapus panen");
+```
+
+Penghapusan dilakukan dengan memperhatikan data yang memiliki hubungan dengan aktivitas panen agar tidak meninggalkan data terkait.
+
+### 3.5 Validasi Input
+
+Validasi input digunakan untuk memeriksa data yang dimasukkan pengguna sebelum diproses oleh sistem.
+
+**File: `controller/InputValidator.java`**
+
+```java
+public static boolean isPositiveNumber(String str) {
+    if (!isValidString(str)) return false;
+
+    try {
+        double val = Double.parseDouble(str.trim());
+        return val > 0;
+    } catch (NumberFormatException e) {
+        return false;
+    }
+}
+```
+
+Validasi tersebut memastikan bahwa input berupa angka yang lebih besar dari nol.
+
+---
+
+## 🗄️ Implementasi Sistem Basis Data
+
+<!-- Bagian ini akan dilengkapi nanti. -->
+
+---
+
+## 📁 Struktur Proyek
+
+<!-- Tambahkan struktur folder dan file proyek di bagian ini. -->
+
+---
+
+## 📸 Dokumentasi Aplikasi
+
+<!-- Tambahkan screenshot aplikasi di bagian ini. -->
