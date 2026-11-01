@@ -24,12 +24,27 @@
 
 ## 📑 Daftar Isi
 
-- [Deskripsi Program](#-1-deskripsi-program)
-- [Gambaran Program](#-2-gambaran-program)
-- [Implementasi Program Java](#-3-implementasi-program-java)
-  - [Koneksi Database](#31-koneksi-database)
-- [Implementasi Sistem Basis Data](#-4-implementasi-sistem-basis-data)
-- [Struktur Proyek](#-struktur-proyek)
+- [📖 1. Deskripsi Program](#-1-deskripsi-program)
+- [🌴 2. Gambaran Program](#-2-gambaran-program)
+  - [🔐 Tampilan Login](#-tampilan-login)
+  - [🌱 Tampilan Kelola Blok Lahan](#-tampilan-kelola-blok-lahan)
+  - [👥 Tampilan Kelola Data Pegawai](#-tampilan-kelola-data-pegawai)
+  - [🌾 Tampilan Kelola Data Panen](#-tampilan-kelola-data-panen)
+  - [📊 Tampilan Rekapitulasi Hasil Panen](#-tampilan-rekapitulasi-hasil-panen)
+  - [📝 Tampilan Evaluasi Hasil Panen](#-tampilan-evaluasi-hasil-panen)
+- [💻 3. Implementasi Program Java](#-3-implementasi-program-java)
+  - [3.1 Koneksi Database](#31-koneksi-database)
+  - [3.2 Login dan Autentikasi](#32-login-dan-autentikasi)
+  - [3.3 Pembagian Hak Akses](#33-pembagian-hak-akses)
+  - [3.4 Implementasi CRUD](#34-implementasi-crud)
+    - [3.4.1 Create (Menambahkan Data)](#341-create-menambahkan-data)
+    - [3.4.2 Read (Menampilkan Data)](#342-read-menampilkan-data)
+    - [3.4.3 Update (Mengubah Data)](#343-update-mengubah-data)
+    - [3.4.4 Delete (Menghapus Data)](#344-delete-menghapus-data)
+  - [3.5 Validasi Input](#35-validasi-input)
+- [🗄️ Implementasi Sistem Basis Data](#-implementasi-sistem-basis-data)
+- [📁 Struktur Proyek](#-struktur-proyek)
+- [📸 Dokumentasi Aplikasi](#-dokumentasi-aplikasi)
 
 ---
 
