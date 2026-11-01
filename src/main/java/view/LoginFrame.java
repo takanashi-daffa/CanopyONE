@@ -3,6 +3,7 @@ package view;
 import javax.swing.JOptionPane;
 import model.DataStore;
 import model.Pegawai;
+import controller.RoleAccess;
 
 public class LoginFrame extends javax.swing.JFrame {
 
@@ -47,14 +48,22 @@ public class LoginFrame extends javax.swing.JFrame {
         lblUsername.setText("Username");
 
         txtUsername.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        txtUsername.setText("admin_sawit");
         txtUsername.setToolTipText("Masukkan username");
+        txtUsername.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtUsernameActionPerformed(evt);
+            }
+        });
 
         lblPassword.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblPassword.setText("Password");
 
         txtPassword.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        txtPassword.setText("admin123");
+        txtPassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtPasswordActionPerformed(evt);
+            }
+        });
 
         chkShowPassword.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
         chkShowPassword.setText("Lihat Password");
@@ -156,40 +165,46 @@ public class LoginFrame extends javax.swing.JFrame {
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         String user = txtUsername.getText().trim();
         String pass = new String(txtPassword.getPassword());
+
         if (user.isEmpty() || pass.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Username dan password wajib diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         Pegawai auth = DataStore.getInstance().findPegawai(user, pass);
-        if (auth != null) {
-            DataStore.getInstance().setCurrentUser(auth.getUsername());
-            if ("Admin".equalsIgnoreCase(auth.getRole()) || user.toLowerCase().contains("admin")) {
-                new AdminFrame().setVisible(true);
-                this.dispose();
-            } else if ("Direksi".equalsIgnoreCase(auth.getRole()) || user.toLowerCase().contains("direksi")) {
-                new DireksiFrame().setVisible(true);
-                this.dispose();
-            } else {
-                new PetugasFrame().setVisible(true);
-                this.dispose();
-            }
+
+        if (auth == null) {
+            JOptionPane.showMessageDialog(this, "Username atau password salah!", "Login Gagal", JOptionPane.ERROR_MESSAGE);
+            txtPassword.setText("");
             return;
         }
 
-        DataStore.getInstance().setCurrentUser(user);
+        String role = RoleAccess.normalisasiRole(auth.getRole());
 
-        if (user.toLowerCase().contains("admin")) {
+        if (role.equals("ADMIN")) {
+            DataStore.getInstance().setCurrentUser(auth.getUsername());
             new AdminFrame().setVisible(true);
             this.dispose();
-        } else if (user.toLowerCase().contains("direksi")) {
+        } else if (role.equals("DIREKSI")) {
+            DataStore.getInstance().setCurrentUser(auth.getUsername());
             new DireksiFrame().setVisible(true);
             this.dispose();
-        } else {
+        } else if (role.equals("PETUGAS")) {
+            DataStore.getInstance().setCurrentUser(auth.getUsername());
             new PetugasFrame().setVisible(true);
             this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Role pengguna tidak dikenali.", "Login Gagal", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void txtPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtPasswordActionPerformed
+
+    private void txtUsernameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtUsernameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtUsernameActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLogin;

@@ -33,7 +33,7 @@ public class Koneksi {
 
         String[] hosts = new String[] { "localhost", "127.0.0.1" };
         String[] passes = new String[] { "", "root" };
-        String dbName = "canopy";
+        String dbName = "db_pt_canopy";
         String params = "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
 
         for (String host : hosts) {

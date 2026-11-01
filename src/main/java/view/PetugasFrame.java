@@ -20,7 +20,12 @@ public class PetugasFrame extends javax.swing.JFrame {
         initCustomData();
     }
 
-    private void initCustomData() {
+        private void initCustomData() {
+        cmbFilterKomoditas.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Semua", "Sawit", "Karet"}));
+        cmbModeRekap.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"Semua Data"}));
+        tblPanen.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) { tblPanenMouseClicked(evt); }
+        });
         loadBlokComboBox();
         refreshPanenTable();
         refreshRekapTable();
