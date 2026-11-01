@@ -24,21 +24,12 @@
 
 ## 📑 Daftar Isi
 
-1. [📖 Deskripsi Program](#-1-deskripsi-program)
-2. [🌴 Gambaran Program](#-2-gambaran-program)
-3. [💻 Implementasi Program Java](#-implementasi-program-java)
-   - [🔌 Koneksi Database](#21-koneksi-database)
-   - [🔐 Login dan Autentikasi](#22-login-dan-autentikasi)
-   - [🛡️ Pembagian Hak Akses](#23-pembagian-hak-akses)
-   - [📝 Implementasi CRUD](#24-implementasi-crud)
-     - [➕ Create (Menambahkan Data)](#241-create-menambahkan-data)
-     - [📋 Read (Menampilkan Data)](#242-read-menampilkan-data)
-     - [✏️ Update (Mengubah Data)](#243-update-mengubah-data)
-     - [🗑️ Delete (Menghapus Data)](#244-delete-menghapus-data)
-   - [✅ Validasi Input](#25-validasi-input)
-4. [🗄️ Implementasi Sistem Basis Data](#-implementasi-sistem-basis-data)
-5. [📁 Struktur Proyek](#-struktur-proyek)
-6. [📸 Dokumentasi Aplikasi](#-dokumentasi-aplikasi)
+- [Deskripsi Program](#-1-deskripsi-program)
+- [Gambaran Program](#-2-gambaran-program)
+- [Implementasi Program Java](#-3-implementasi-program-java)
+  - [Koneksi Database](#31-koneksi-database)
+- [Implementasi Sistem Basis Data](#-4-implementasi-sistem-basis-data)
+- [Struktur Proyek](#-struktur-proyek)
 
 ---
 
